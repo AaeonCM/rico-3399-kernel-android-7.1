@@ -66,6 +66,27 @@
 		};
 	};
 
+	rt5640-sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,name = "rockchip,rt5640-codec";
+		simple-audio-card,mclk-fs = <256>;
+		simple-audio-card,widgets =
+			"Microphone", "Mic Jack",
+			"Headphone", "Headphone Jack";
+		simple-audio-card,routing =
+			"Mic Jack", "MICBIAS1",
+			"IN1P", "Mic Jack",
+			"Headphone Jack", "HPOL",
+			"Headphone Jack", "HPOR";
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+		simple-audio-card,codec {
+			sound-dai = <&rt5640>;
+		};
+	};
+
 	spdif-sound {
 		status = "okay";
 		compatible = "simple-audio-card";
@@ -103,7 +124,7 @@
 	wireless-wlan {
 		compatible = "wlan-platdata";
 		rockchip,grf = <&grf>;
-		wifi_chip_type = "ap6354";
+		wifi_chip_type = "ap6255";
 		sdio_vref = <1800>;
 		WIFI,host_wake_irq = <&gpio0 3 GPIO_ACTIVE_HIGH>; /* GPIO0_a3 */
 		status = "okay";
@@ -149,6 +170,23 @@
 		pinctrl-0 = <&i2s_8ch_mclk>;
 		spk-con-gpio = <&gpio0 11 GPIO_ACTIVE_HIGH>;
 		hp-det-gpio = <&gpio4 28 GPIO_ACTIVE_LOW>;
+	};
+
+	rt5640: rt5640@1c {
+		#sound-dai-cells = <0>;
+		compatible = "realtek,rt5640";
+		reg = <0x1c>;
+		clocks = <&cru SCLK_I2S_8CH_OUT>;
+		clock-names = "mclk";
+		realtek,in1-differential;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rt5640_hpcon &i2s_8ch_mclk>;
+		hp-con-gpio = <&gpio4 21 GPIO_ACTIVE_HIGH>;
+		//hp-det-gpio = <&gpio4 28 GPIO_ACTIVE_LOW>;
+		io-channels = <&saradc 4>, <&saradc 2>;
+		io-channel-names = "hp-det", "hp-hook";
+		hp-det-adc-value = <500>;
+		hp-hook-adc-value = <0>;
 	};
 };
 
@@ -223,6 +261,12 @@
 		uart0_gpios: uart0-gpios {
 			rockchip,pins =
 				<2 19 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	rt5640 {
+		rt5640_hpcon: rt5640-hpcon {
+			rockchip,pins = <4 21 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 };

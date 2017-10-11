@@ -241,6 +241,7 @@ static void option_instat_callback(struct urb *urb);
 /* These Quectel products use Quectel's vendor ID */
 #define QUECTEL_PRODUCT_EC21			0x0121
 #define QUECTEL_PRODUCT_EC25			0x0125
+#define QUECTEL_PRODUCT_EC20			0x9215
 
 #define CMOTECH_VENDOR_ID			0x16d8
 #define CMOTECH_PRODUCT_6001			0x6001
@@ -2109,6 +2110,62 @@ static int option_probe(struct usb_serial *serial,
 	    dev_desc->idProduct == cpu_to_le16(SAMSUNG_PRODUCT_GT_B3730) &&
 	    iface_desc->bInterfaceClass != USB_CLASS_CDC_DATA)
 		return -ENODEV;
+
+	// Quectel UC20's interface 4 can be used as USB Network device
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_UC20) &&
+			serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4) {
+		return -ENODEV;
+	}
+	// Quectel EC20's interface 4 can be used as USB Network device
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_EC20) &&
+			serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4) {
+		return -ENODEV;
+	}
+	// Quectel EC21 & EC25 R2.0's interface 4 can be used as USB Network device
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUECTEL_VENDOR_ID) &&
+			serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4) {
+		return -ENODEV;
+	}
+
+	// For USB Auto Suspend
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_UC20)) {
+		pm_runtime_set_autosuspend_delay(&serial->dev->dev, 3000);
+		usb_enable_autosuspend(serial->dev);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_UC15)) {
+		pm_runtime_set_autosuspend_delay(&serial->dev->dev, 3000);
+		usb_enable_autosuspend(serial->dev);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_EC20)) {
+		pm_runtime_set_autosuspend_delay(&serial->dev->dev, 3000);
+		usb_enable_autosuspend(serial->dev);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUECTEL_VENDOR_ID)) {
+		pm_runtime_set_autosuspend_delay(&serial->dev->dev, 3000);
+		usb_enable_autosuspend(serial->dev);
+	}
+
+	// For USB Remote Wakeup
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_UC20)) {
+		device_init_wakeup(&serial->dev->dev, 1);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_UC15)) {
+		device_init_wakeup(&serial->dev->dev, 1);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUALCOMM_VENDOR_ID) &&
+			serial->dev->descriptor.idProduct == cpu_to_le16(QUECTEL_PRODUCT_EC20)) {
+		device_init_wakeup(&serial->dev->dev, 1);
+	}
+	if (serial->dev->descriptor.idVendor == cpu_to_le16(QUECTEL_VENDOR_ID)) {
+		device_init_wakeup(&serial->dev->dev, 1);
+	}
 
 	/* Store the blacklist info so we can use it during attach. */
 	usb_set_serial_data(serial, (void *)blacklist);

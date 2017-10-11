@@ -2964,6 +2964,7 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	const struct dw_mci_drv_data *drv_data = host->drv_data;
 	int idx, ret;
 	u32 clock_frequency;
+	struct gpio_desc *enable_gpio;
 
 	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata)
@@ -3000,6 +3001,20 @@ static struct dw_mci_board *dw_mci_parse_dt(struct dw_mci *host)
 	if (of_find_property(np, "supports-highspeed", NULL)) {
 		dev_info(dev, "supports-highspeed property is deprecated.\n");
 		pdata->caps |= MMC_CAP_SD_HIGHSPEED | MMC_CAP_MMC_HIGHSPEED;
+	}
+
+	enable_gpio = devm_gpiod_get_optional(dev, "enable", 0);
+	if (IS_ERR(enable_gpio)) {
+		dev_warn(dev, "%s: failed to get enable-gpios!\n", __func__);
+		enable_gpio = NULL;
+	}
+
+	if (enable_gpio) {
+		if (gpiod_direction_output(enable_gpio, 0) < 0)
+			dev_err(dev, "%s: failed to pull down enable gpio\n", __func__);
+		msleep(1);
+		if (gpiod_direction_output(enable_gpio, 1) < 0)
+			dev_err(dev, "%s: failed to pull up enable gpio\n", __func__);
 	}
 
 	return pdata;

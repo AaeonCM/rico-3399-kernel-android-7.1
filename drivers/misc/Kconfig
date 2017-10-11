@@ -552,6 +552,12 @@ config USB_CAM_GPIO
 	help
 	  Enable this driver will support usb camera gpio control
 
+config USB_MODEM_CARD
+	bool "usb modem card driver"
+	default n
+	help
+	  Enable this driver will support usb usb modem card gpio control
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"

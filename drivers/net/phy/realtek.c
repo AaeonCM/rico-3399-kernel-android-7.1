@@ -24,6 +24,25 @@
 #define RTL821x_INSR		0x13
 #define RTL8211E_INER_LINK_STATUS 0x400
 
+#define RTL8211E_EPAGSR                         0x1e
+#define RTL8211E_EPAGSR_EXT44                   0x2c
+#define RTL8211E_PAGSEL                         0x1f
+#define RTL8211E_PAGSEL_P0                      0x0
+#define RTL8211E_PAGSEL_P5                      0x5
+#define RTL8211E_PAGSEL_EXTPAGE                 0x7
+#define RTL8211E_LACR                           0x1a /* LED Action Control Register */
+#define RTL8211E_LACR_LED0_BLINKING             BIT(4)
+#define RTL8211E_LACR_LED1_BLINKING             BIT(5)
+#define RTL8211E_LACR_LED2_BLINKING             BIT(6)
+#define RTL8211E_LCR                            0x1c /* LED Control Register */
+#define RTL8211E_LCR_LED0_ACTIVE_SPEED_ALL      (BIT(0) | BIT(1) | BIT(2))
+#define RTL8211E_LCR_LED1_ACTIVE_SPEED_100M     BIT(5)
+#define RTL8211E_LCR_LED2_ACTIVE_SPEED_1000M    BIT(10)
+#define RTL8211E_P05_R05                        0x5  /* EEE LED control Reg.5 in Page 5 */
+#define RTL8211E_P05_R05_EEE_LED_DISABLED       0x8b82
+#define RTL8211E_P05_R06                        0x6  /* EEE LED control Reg.6 in Page 5 */
+#define RTL8211E_P05_R06_EEE_LED_DISABLED       0x052b
+
 #define RTL8211F_INER_LINK_STATUS 0x0010
 #define RTL8211F_INSR		0x1d
 #define RTL8211F_PAGE_SELECT	0x1f
@@ -32,6 +51,30 @@
 MODULE_DESCRIPTION("Realtek PHY driver");
 MODULE_AUTHOR("Johnson Leung");
 MODULE_LICENSE("GPL");
+
+static void rtl8211e_setup_led(struct phy_device *phydev)
+{
+	/* By default the EEE LED mode is enabled, that is
+	 * blinking as 400ms on and 2s off. And we want to
+	 * disable EEE LED mode.
+	 */
+	phy_write(phydev, RTL8211E_PAGSEL, RTL8211E_PAGSEL_P5);
+	phy_write(phydev, RTL8211E_P05_R05, RTL8211E_P05_R05_EEE_LED_DISABLED);
+	phy_write(phydev, RTL8211E_P05_R06, RTL8211E_P05_R06_EEE_LED_DISABLED);
+
+	phy_write(phydev, RTL8211E_PAGSEL, RTL8211E_PAGSEL_EXTPAGE);
+	phy_write(phydev, RTL8211E_EPAGSR, RTL8211E_EPAGSR_EXT44);
+	phy_write(phydev, RTL8211E_LCR,
+			RTL8211E_LCR_LED0_ACTIVE_SPEED_ALL |
+			RTL8211E_LCR_LED1_ACTIVE_SPEED_100M |
+			RTL8211E_LCR_LED2_ACTIVE_SPEED_1000M);
+
+	/* The LED0 blinking, the other two are in steady mode */
+	phy_write(phydev, RTL8211E_LACR, RTL8211E_LACR_LED0_BLINKING);
+
+	/* restore to default page 0 */
+	phy_write(phydev, RTL8211E_PAGSEL, RTL8211E_PAGSEL_P0);
+}
 
 static int rtl821x_ack_interrupt(struct phy_device *phydev)
 {
@@ -78,6 +121,19 @@ static int rtl8211e_config_intr(struct phy_device *phydev)
 		err = phy_write(phydev, RTL821x_INER, 0);
 
 	return err;
+}
+
+static int rtl8211e_config_init(struct phy_device *phydev)
+{
+	int ret;
+
+	ret = genphy_config_init(phydev);
+	if (ret < 0)
+		return ret;
+
+	rtl8211e_setup_led(phydev);
+
+	return 0;
 }
 
 static int rtl8211f_config_intr(struct phy_device *phydev)
@@ -159,6 +215,7 @@ static struct phy_driver realtek_drvs[] = {
 		.read_status	= &genphy_read_status,
 		.ack_interrupt	= &rtl821x_ack_interrupt,
 		.config_intr	= &rtl8211e_config_intr,
+		.config_init	= &rtl8211e_config_init,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.driver		= { .owner = THIS_MODULE,},

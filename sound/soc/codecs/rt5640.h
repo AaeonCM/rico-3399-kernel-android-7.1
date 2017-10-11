@@ -2103,6 +2103,20 @@ struct rt5640_priv {
 	int pll_out;
 
 	bool hp_mute;
+
+	struct notifier_block hp_jack_nb;
+	struct delayed_work hp_det_adc_poll_work;
+	struct delayed_work hp_hook_adc_poll_work;
+	struct iio_channel *hp_det_chan;
+	struct iio_channel *hp_hook_chan;
+	int hp_det_adc_value;
+	int hp_hook_adc_value;
+	bool hp_insert;
+	bool hp_hook_held;
+	int hp_hook_count;
+	int hp_con_gpio;
+	bool hp_con_gpio_active_high;
+	struct snd_soc_jack hp_jack;
 };
 
 int rt5640_dmic_enable(struct snd_soc_codec *codec,

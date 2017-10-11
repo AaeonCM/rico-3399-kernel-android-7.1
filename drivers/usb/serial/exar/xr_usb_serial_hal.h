@@ -1,0 +1,17 @@
+int xr_usb_serial_set_reg(struct xr_usb_serial *xr_usb_serial,int regnum, int value);
+int xr_usb_serial_set_control(struct xr_usb_serial *xr_usb_serial, unsigned int control);
+int xr_usb_serial_set_reg_ext(struct xr_usb_serial *xr_usb_serial,int channel,int regnum, int value);
+int xr_usb_serial_get_reg(struct xr_usb_serial *xr_usb_serial,int regnum, short *value);
+int xr_usb_serial_get_reg_ext(struct xr_usb_serial *xr_usb_serial,int channel,int regnum, short *value);
+int xr_usb_serial_set_control(struct xr_usb_serial *xr_usb_serial, unsigned int control);
+int xr_usb_serial_set_line(struct xr_usb_serial *xr_usb_serial, struct usb_cdc_line_coding* line);
+int xr_usb_serial_set_flow_mode(struct xr_usb_serial *xr_usb_serial, struct tty_struct *tty, unsigned int cflag);
+int xr_usb_serial_send_break(struct xr_usb_serial *xr_usb_serial, int state);
+int xr_usb_serial_enable(struct xr_usb_serial *xr_usb_serial);
+int xr_usb_serial_fifo_reset(struct xr_usb_serial *xr_usb_serial);
+int xr_usb_serial_disable(struct xr_usb_serial *xr_usb_serial);
+int xr_usb_serial_set_loopback(struct xr_usb_serial *xr_usb_serial, int channel);
+int xr_usb_serial_set_wide_mode(struct xr_usb_serial *xr_usb_serial, int preciseflags);
+int xr_usb_serial_tiocmget(struct xr_usb_serial *xr_usb_serial);
+int xr_usb_serial_tiocmset(struct xr_usb_serial *xr_usb_serial, unsigned int set, unsigned int clear);
+int xr_usb_serial_pre_setup(struct xr_usb_serial *xr_usb_serial);

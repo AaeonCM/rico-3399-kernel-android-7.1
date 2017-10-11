@@ -53,7 +53,7 @@
 	vcc_lcd: vcc-lcd {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc_lcd";
-		gpio = <&gpio4 30 GPIO_ACTIVE_HIGH>;
+		gpio = <&gpio4 22 GPIO_ACTIVE_HIGH>; // GPIO_C6
 		startup-delay-us = <20000>;
 		enable-active-high;
 		regulator-min-microvolt = <3300000>;
@@ -69,20 +69,22 @@
 		enable-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
 		prepare-delay-ms = <20>;
 		enable-delay-ms = <20>;
+		delay,prepare = <20>;
+		delay,enable = <20>;
 
 		display-timings {
 			native-mode = <&timing0>;
 
-			timing0: timing0 {
-				clock-frequency = <200000000>;
-				hactive = <1536>;
-				vactive = <2048>;
-				hfront-porch = <12>;
-				hsync-len = <16>;
-				hback-porch = <48>;
-				vfront-porch = <8>;
-				vsync-len = <4>;
-				vback-porch = <8>;
+			timing0: timing0 { // Innolux N116HSE-EBC eDP 1920x1080
+				clock-frequency = <138780000>;
+				hactive = <1920>;
+				vactive = <1080>;
+				hfront-porch = <48>;
+				hsync-len = <32>;
+				hback-porch = <80>;
+				vfront-porch = <3>;
+				vsync-len = <5>;
+				vback-porch = <24>;
 				hsync-active = <0>;
 				vsync-active = <0>;
 				de-active = <0>;
@@ -105,17 +107,48 @@
 		status = "disabled";
 	};
 
+	rt5640-sound {
+		status = "okay";
+	};
+
 	hdmiin-sound {
 		compatible = "rockchip,rockchip-rt5651-tc358749x-sound";
 		rockchip,cpu = <&i2s0>;
 		rockchip,codec = <&rt5651 &rt5651 &tc358749x>;
 		status = "okay";
 	};
+
+	vcc5v0_hdmi: vcc5v0-hdmi-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&hdmi_en>;
+		regulator-name = "vcc5v0_hdmi";
+		regulator-always-on;
+	};
+
+	vcc3v3_usbhub: vcc3v3-usbhub-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_hub_en>;
+		regulator-name = "vcc3v3_usbhub";
+		regulator-always-on;
+	};
+
+	usb-modem-card {
+		compatible = "usb-modem-card";
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_modem_card_en>;
+		enable-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &backlight {
 	status = "okay";
-	enable-gpios = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+	enable-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>; // GPIO_D4
 };
 
 &edp {
@@ -133,8 +166,12 @@
 	};
 };
 
-&edp_in_vopl {
+&edp_in_vopb {
 	status = "disabled";
+};
+
+&edp_in_vopl {
+	status = "okay";
 };
 
 &hdmi {
@@ -142,11 +179,15 @@
 };
 
 &hdmi_in_vopb {
+	status = "okay";
+};
+
+&hdmi_in_vopl {
 	status = "disabled";
 };
 
 &rt5651 {
-	status = "okay";
+	status = "disabled";
 };
 
 &cdn_dp {
@@ -163,7 +204,18 @@
 	status = "disabled";
 };
 
+&i2s0 {
+	status = "okay";
+};
+
+&i2s1 {
+	status = "okay";
+};
+
 &i2s2 {
+	#sound-dai-cells = <0>;
+	dmas = <&dmac_bus 4>;
+	dma-names = "tx";
 	status = "okay";
 };
 
@@ -177,6 +229,7 @@
 		screen_max_y = <2048>;
 		irq_gpio_number = <&gpio1 20 IRQ_TYPE_LEVEL_LOW>;
 		rst_gpio_number = <&gpio4 22 GPIO_ACTIVE_HIGH>;
+		status = "disabled";
 	};
 
 	tc358749x: tc358749x@0f {
@@ -191,11 +244,13 @@
 		int-gpios = <&gpio2 12 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&hdmiin_gpios>;
-		status = "okay";
+		status = "disabled";
 	};
 };
 
 &i2c6 {
+	status = "okay";
+
 	cw2015@62 {
 		status = "disabled";
 		compatible = "cw201x";
@@ -211,6 +266,32 @@
 		monitor_sec = <5>;
 		virtual_power = <0>;
 	};
+
+	pn544: pn544@28 {
+		compatible = "nxp,pn544";
+		reg = <0x28>;
+		clock-frequency = <400000>;
+		interrupt-gpios = <&gpio2 7 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpio2 8 GPIO_ACTIVE_HIGH>;
+		firmware-gpios = <&gpio2 6 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&nfc_gpios>;
+		status = "okay";
+	};
+};
+
+&i2c7 {
+	status = "disabled";
+};
+
+&spi1 {
+	status = "disabled";
+};
+
+&uart4 {
+	current-speed = <9600>;
+	no-loopback-test;
+	status = "okay";
 };
 
 &isp0 {
@@ -231,12 +312,12 @@
 
 &vopb {
 	assigned-clocks = <&cru DCLK_VOP0_DIV>;
-	assigned-clock-parents = <&cru PLL_CPLL>;
+	assigned-clock-parents = <&cru PLL_VPLL>;
 };
 
 &vopl {
 	assigned-clocks = <&cru DCLK_VOP1_DIV>;
-	assigned-clock-parents = <&cru PLL_VPLL>;
+	assigned-clock-parents = <&cru PLL_CPLL>;
 };
 
 &pcie_phy {
@@ -253,6 +334,29 @@
 
 &route_edp {
 	status = "okay";
+	logo,mode = "center";
+	connect = <&vopl_out_edp>;
+};
+
+&route_hdmi {
+	status = "okay";
+	logo,mode = "center";
+	connect = <&vopb_out_hdmi>;
+};
+
+&sdmmc {
+	sd-uhs-sdr104;
+	enable-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+};
+
+&io_domains {
+	status = "okay";
+	bt656-supply = <&vcc1v8_dvp>; /* APIO2_VDD */
+};
+
+&pmu_io_domains {
+	status = "okay";
+	pmu1830-supply = <&vcc_1v8>; /* PMUIO2_VDD */
 };
 
 &pinctrl {
@@ -271,6 +375,39 @@
 				<2 8 RK_FUNC_GPIO &pcfg_pull_none>,
 				<2 9 RK_FUNC_GPIO &pcfg_pull_none>,
 				<2 12 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	hdmien {
+		hdmi_en: hdmi-en {
+			rockchip,pins = <4 27 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	usbhuben {
+		usb_hub_en: usb-hub-en {
+			rockchip,pins = <4 29 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	usb-modem-card {
+		usb_modem_card_en: usb-modem-card-en {
+			rockchip,pins = <0 6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	sdmmc {
+		sdmmc_en: sdmmc-en {
+			rockchip,pins = <0 1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	nfc {
+		nfc_gpios: nfc-gpios {
+			rockchip,pins =
+					<2 6 RK_FUNC_GPIO &pcfg_pull_none>,
+					<2 7 RK_FUNC_GPIO &pcfg_pull_none>,
+					<2 8 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 };

@@ -713,4 +713,6 @@ config USB_SERIAL_DEBUG
 	  To compile this driver as a module, choose M here: the
 	  module will be called usb-debug.
 
+source "drivers/usb/serial/exar/Kconfig"
+
 endif # USB_SERIAL
